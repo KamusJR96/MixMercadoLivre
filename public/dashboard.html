@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+    body { padding: 24px; max-width: 900px; margin: 0 auto; }
+    .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 20px; }
+    .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi { display: flex; align-items: center; gap: 12px; padding: 16px; }
+    .kpi-icone { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .kpi-icone-azul { background: rgba(91,156,246,0.15); }
+    .kpi-icone-verde { background: rgba(59,201,160,0.15); }
+    .kpi-icone-roxo { background: rgba(124,106,247,0.15); }
+    .kpi-label { font-size: 11px; color: var(--text-muted); margin-bottom: 2px; }
+    .kpi-valor { font-size: 20px; font-weight: 800; color: var(--accent-2); }
+    .graficos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .grafico-titulo { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 12px; text-align: center; }
+    .grafico-titulo.premium { color: #b06cf7; }
+    .legenda { display: flex; gap: 16px; justify-content: center; margin-top: 12px; font-size: 12px; }
+    .legenda-item { display: flex; align-items: center; gap: 5px; }
+    .legenda-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .alerta { display: flex; align-items: center; gap: 12px; background: rgba(226,80,74,0.1); border: 1px solid rgba(226,80,74,0.3); border-radius: var(--radius-sm); padding: 12px 16px; color: var(--text-secondary); font-size: 12px; }
+    .toggle-st-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+    .toggle-st-wrap.ressarcido { color: var(--accent-2); font-weight: 600; }
+</style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+
+<button class="voltar" onclick="window.location.href='/produtos.html'">← Voltar</button>
+
+<div class="topo">
+    <div>
+        <h1>Dashboard de Performance</h1>
+        <p>Raio-X financeiro do seu mix de produtos.</p>
+    </div>
+    <div class="topo-acoes">
+        <div class="toggle-st-wrap" id="toggle-st-wrap">
+            <label class="toggle">
+                <input type="checkbox" id="toggle-st" onchange="alternarST()">
+                <span class="toggle-slider"></span>
+            </label>
+            <span id="label-st">ST Padrão</span>
+        </div>
+        <button id="btn-tema" onclick="alternarTema()">☀</button>
+    </div>
+</div>
+
+<div class="kpis">
+    <div class="card kpi">
+        <div class="kpi-icone kpi-icone-azul">📦</div>
+        <div>
+            <div class="kpi-label">Total de SKUs</div>
+            <div class="kpi-valor" id="kpi-total">—</div>
+        </div>
+    </div>
+    <div class="card kpi">
+        <div class="kpi-icone kpi-icone-verde">$</div>
+        <div>
+            <div class="kpi-label">Ticket Médio (Clássico)</div>
+            <div class="kpi-valor" id="kpi-ticket-cl">—</div>
+        </div>
+    </div>
+    <div class="card kpi">
+        <div class="kpi-icone kpi-icone-roxo">📈</div>
+        <div>
+            <div class="kpi-label">Ticket Médio (Premium)</div>
+            <div class="kpi-valor" id="kpi-ticket-pr">—</div>
+        </div>
+    </div>
+</div>
+
+<div class="graficos">
+    <div class="card">
+        <div class="grafico-titulo">Rentabilidade ML Clássico</div>
+        <canvas id="grafico-cl" height="160"></canvas>
+        <div class="legenda">
+            <div class="legenda-item"><div class="legenda-dot" style="background:#3bc9a0"></div><span id="leg-lucro-cl">— Lucro</span></div>
+            <div class="legenda-item"><div class="legenda-dot" style="background:#e2504a"></div><span id="leg-prejuizo-cl">— Prejuízo</span></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="grafico-titulo premium">Rentabilidade ML Premium</div>
+        <canvas id="grafico-pr" height="160"></canvas>
+        <div class="legenda">
+            <div class="legenda-item"><div class="legenda-dot" style="background:#3bc9a0"></div><span id="leg-lucro-pr">— Lucro</span></div>
+            <div class="legenda-item"><div class="legenda-dot" style="background:#e2504a"></div><span id="leg-prejuizo-pr">— Prejuízo</span></div>
+        </div>
+    </div>
+</div>
+
+<div id="alerta" style="display:none" class="alerta">
+    ⚠ Identificamos produtos com margem negativa no seu mix. Experimente ativar o "ST Ressarcido" para ver se o cenário melhora.
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/calculosFiscais.js"></script>
+<script src="/js/dashboard.js"></script>
+<script>
+let chartCl = null;
+let chartPr = null;
+let todos = [];
+let stRessarcido = localStorage.getItem('st_ressarcido') === 'true';
+
+function fmt(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+
+function aplicarToggleST() {
+    document.getElementById('toggle-st').checked = stRessarcido;
+    const wrap = document.getElementById('toggle-st-wrap');
+    const label = document.getElementById('label-st');
+    if (stRessarcido) {
+        wrap.classList.add('ressarcido');
+        label.textContent = '⚡ ST Ressarcido';
+    } else {
+        wrap.classList.remove('ressarcido');
+        label.textContent = 'ST Padrão';
+    }
+}
+
+function alternarST() {
+    stRessarcido = document.getElementById('toggle-st').checked;
+    localStorage.setItem('st_ressarcido', stRessarcido);
+    aplicarToggleST();
+    renderizar();
+}
+
+function criarGrafico(id, lucro, prejuizo) {
+    return new Chart(document.getElementById(id), {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [lucro, prejuizo],
+                backgroundColor: ['#3bc9a0', '#e2504a'],
+                borderWidth: 0,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            cutout: '65%',
+            plugins: { legend: { display: false }, tooltip: { enabled: false } },
+            animation: { duration: 500 }
+        }
+    });
+}
+
+function renderizar() {
+    const calculados = calcularTodos(todos, stRessarcido);
+
+    const total = calculados.length;
+    const ticketCl = total > 0 ? calculados.reduce((s, p) => s + Number(p.preco_classico), 0) / total : 0;
+    const ticketPr = total > 0 ? calculados.reduce((s, p) => s + Number(p.preco_premium), 0) / total : 0;
+
+    document.getElementById('kpi-total').textContent = total;
+    document.getElementById('kpi-ticket-cl').textContent = fmt(ticketCl);
+    document.getElementById('kpi-ticket-pr').textContent = fmt(ticketPr);
+
+    const lucroCl = calculados.filter(p => p.classico.margem >= 0).length;
+    const prejuizoCl = total - lucroCl;
+    const lucroPr = calculados.filter(p => p.premium.margem >= 0).length;
+    const prejuizoPr = total - lucroPr;
+
+    document.getElementById('leg-lucro-cl').textContent = lucroCl + ' Lucro';
+    document.getElementById('leg-prejuizo-cl').textContent = prejuizoCl + ' Prejuízo';
+    document.getElementById('leg-lucro-pr').textContent = lucroPr + ' Lucro';
+    document.getElementById('leg-prejuizo-pr').textContent = prejuizoPr + ' Prejuízo';
+
+    if (chartCl) chartCl.destroy();
+    if (chartPr) chartPr.destroy();
+    chartCl = criarGrafico('grafico-cl', lucroCl, prejuizoCl);
+    chartPr = criarGrafico('grafico-pr', lucroPr, prejuizoPr);
+
+    const temPrejuizo = prejuizoCl > 0 || prejuizoPr > 0;
+    document.getElementById('alerta').style.display = temPrejuizo && !stRessarcido ? 'flex' : 'none';
+}
+
+(async () => {
+    const usuario = await Api.get('/api/auth/eu');
+    if (!usuario) return;
+    aplicarToggleST();
+    todos = await Api.get('/api/produtos');
+    if (!todos) return;
+    renderizar();
+})();
+</script>
+</body>
+</html>

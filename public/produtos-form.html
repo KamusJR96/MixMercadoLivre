@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Produto</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { padding: 32px; max-width: 960px; margin: 0 auto; }
+        .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 24px; }
+        .secao { margin-bottom: 24px; }
+        .secao-titulo { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; }
+        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .input-icon { position: relative; }
+        .input-icon span { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 13px; pointer-events: none; }
+        .input-icon input { padding-left: 30px; }
+        .cenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px; }
+        .cenario-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+        .cenario-titulo { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px; padding: 3px 10px; border-radius: 4px; display: inline-block; }
+        .classico-titulo { background: rgba(91,156,246,0.15); color: #5b9cf6; }
+        .premium-titulo { background: rgba(176,108,247,0.15); color: #b06cf7; }
+        .resultado-linha { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
+        .resultado-linha span:first-child { color: var(--text-secondary); }
+        .resultado-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-weight: 700; }
+        .margem-grande { font-size: 22px; font-weight: 800; }
+        .pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
+        .pill { background: var(--bg-input); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
+        .pill-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+        .pill-valor { font-size: 13px; font-weight: 600; color: var(--danger); }
+        .pill-destaque { border: 1px solid var(--warning); }
+        .pill-destaque .pill-valor { color: var(--warning); }
+        .rodape-form { display: flex; gap: 12px; margin-top: 32px; }
+        .btn-salvar { background: linear-gradient(135deg, var(--accent), #5b9cf6); color: #fff; flex: 1; padding: 14px; font-size: 15px; }
+        .btn-cancelar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 14px 24px; }
+        .cabecalho-secao { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    </style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+
+<button class="voltar" onclick="window.location.href='/produtos.html'">← Voltar</button>
+<h1 id="titulo-pagina">Novo Cadastro</h1>
+<br>
+
+<div class="card secao">
+    <div class="secao-titulo">Dados Cadastrais</div>
+    <div class="grid-cadastral">
+        <div class="campo">
+        <label>SKU</label>
+        <input type="text" id="sku">
+    </div>
+    <div class="campo">
+        <label>Cód. Barras <button class="btn-ml" onclick="buscarML('cod_barras')" title="Buscar no ML">ML</button></label>
+        <input type="text" id="cod_barras">
+    </div>
+    <div class="campo">
+        <label>Marca</label>
+        <select id="marca_id"><option value="">Selecione...</option></select>
+    </div>
+    <div class="campo">
+        <label>Descrição / Nome <button class="btn-ml" onclick="buscarML('nome')" title="Buscar no ML">ML</button></label>
+        <input type="text" id="nome">
+    </div>
+    </div>
+</div>
+
+<div class="card secao">
+    <div class="cabecalho-secao">
+        <div class="secao-titulo" style="margin:0">Custo e Tributação (%)</div>
+        <div class="toggle-container">
+            <span style="font-size:12px;color:var(--text-muted)">ST Ressarcido</span>
+            <label class="toggle">
+                <input type="checkbox" id="toggle-st-form">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="grid-4" style="margin-bottom:16px">
+        <div class="campo">
+            <label>Custo Aquisição (R$)</label>
+            <div class="input-icon"><span>R$</span><input type="number" id="custo" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+        <div class="campo">
+            <label>ICMS Ent. (%)</label>
+            <div class="input-icon"><span>%</span><input type="number" id="icms_entrada" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+        <div class="campo">
+            <label>ST (%)</label>
+            <div class="input-icon"><span>%</span><input type="number" id="st" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+        <div class="campo">
+            <label>IPI (%)</label>
+            <div class="input-icon"><span>%</span><input type="number" id="ipi" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+    </div>
+    <div class="grid-4">
+        <div class="campo">
+            <label>DIFAL (%)</label>
+            <div class="input-icon"><span>%</span><input type="number" id="difal" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+        <div class="campo">
+            <label>ICMS Saída (%)</label>
+            <div class="input-icon"><span>%</span><input type="number" id="icms_saida" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+        <div class="campo">
+            <label>Frete Mercado Livre (R$)</label>
+            <div class="input-icon"><span>R$</span><input type="number" id="frete_ml" value="0" step="0.01" oninput="recalcular()"></div>
+        </div>
+    </div>
+</div>
+
+<div class="cenarios">
+    <div class="cenario-card">
+        <span class="cenario-titulo classico-titulo">CLÁSSICO</span>
+        <div class="grid-2">
+            <div class="campo">
+                <label>Seu Preço (R$)</label>
+                <div class="input-icon"><span>$</span><input type="number" id="preco_classico" value="0" step="0.01" oninput="recalcular()"></div>
+            </div>
+            <div class="campo">
+                <label>Concorrente (R$)</label>
+                <input type="number" id="preco_concorrente_classico" value="0" step="0.01">
+            </div>
+        </div>
+        <div class="resultado-total">
+            <span>Custo Total</span>
+            <span id="custo-total-cl">R$ 0,00</span>
+        </div>
+        <div class="resultado-total" style="border-top:none;margin-top:4px;padding-top:0">
+            <span>Margem</span>
+            <span class="margem-grande" id="margem-cl">0,00%</span>
+        </div>
+        <div class="pills">
+            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor" id="p-icmsent-cl" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-cl">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-cl">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor" id="p-piscred-cl" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-cl">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-cl">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-cl">R$ 0,00</div></div>
+            <div class="pill pill-destaque"><div class="pill-label">Taxa ML (11.5%)</div><div class="pill-valor" id="p-taxa-cl">R$ 0,00</div></div>
+        </div>
+    </div>
+
+    <div class="cenario-card">
+        <span class="cenario-titulo premium-titulo">PREMIUM</span>
+        <div class="grid-2">
+            <div class="campo">
+                <label>Seu Preço (R$)</label>
+                <div class="input-icon"><span>$</span><input type="number" id="preco_premium" value="0" step="0.01" oninput="recalcular()"></div>
+            </div>
+            <div class="campo">
+                <label>Concorrente (R$)</label>
+                <input type="number" id="preco_concorrente_premium" value="0" step="0.01">
+            </div>
+        </div>
+        <div class="resultado-total">
+            <span>Custo Total</span>
+            <span id="custo-total-pr">R$ 0,00</span>
+        </div>
+        <div class="resultado-total" style="border-top:none;margin-top:4px;padding-top:0">
+            <span>Margem</span>
+            <span class="margem-grande" id="margem-pr">0,00%</span>
+        </div>
+        <div class="pills">
+            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor" id="p-icmsent-pr" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-pr">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-pr">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor" id="p-piscred-pr" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-pr">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-pr">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-pr">R$ 0,00</div></div>
+            <div class="pill pill-destaque"><div class="pill-label">Taxa ML (16.5%)</div><div class="pill-valor" id="p-taxa-pr">R$ 0,00</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="rodape-form">
+    <button class="btn-salvar" onclick="salvar()">💾 Salvar Alterações</button>
+    <button class="btn-cancelar" onclick="window.location.href='/produtos.html'">Cancelar</button>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/calculosFiscais.js"></script>
+<script>
+const params = new URLSearchParams(window.location.search);
+const idEdicao = params.get('id');
+let stRessarcido = localStorage.getItem('st_ressarcido') === 'true';
+
+function fmt(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+
+function getDados() {
+    return {
+        custo: document.getElementById('custo').value,
+        icms_entrada: document.getElementById('icms_entrada').value,
+        icms_saida: document.getElementById('icms_saida').value,
+        ipi: document.getElementById('ipi').value,
+        difal: document.getElementById('difal').value,
+        st: document.getElementById('st').value,
+        frete_ml: document.getElementById('frete_ml').value,
+        preco_classico: document.getElementById('preco_classico').value,
+        preco_premium: document.getElementById('preco_premium').value,
+        flag_simulacao_st: document.getElementById('toggle-st-form').checked
+    };
+}
+
+function buscarML(campoId) {
+    const termo = document.getElementById(campoId).value.trim();
+    if (!termo) { alert('Preencha o campo antes de buscar.'); return; }
+    const termFormatado = termo.replace(/\s+/g, '-');
+    const url = 'https://lista.mercadolivre.com.br/' + termFormatado + '_OrderId_PRICE_NoIndex_True';
+    window.open(url, '_blank');
+}
+
+function recalcular() {
+    const r = calcularPrecificacao(getDados());
+
+    document.getElementById('custo-total-cl').textContent = fmt(r.classico.custoTotal);
+    document.getElementById('custo-total-pr').textContent = fmt(r.premium.custoTotal);
+
+    const elMcl = document.getElementById('margem-cl');
+    const elMpr = document.getElementById('margem-pr');
+    elMcl.textContent = r.classico.margem.toFixed(2).replace('.', ',') + '%';
+    elMpr.textContent = r.premium.margem.toFixed(2).replace('.', ',') + '%';
+    elMcl.className = 'margem-grande ' + (r.classico.margem >= 0 ? 'margem-positiva' : 'margem-negativa');
+    elMpr.className = 'margem-grande ' + (r.premium.margem >= 0 ? 'margem-positiva' : 'margem-negativa');
+
+    const cb = r.custoBase;
+    document.getElementById('p-icmsent-cl').textContent = fmt(cb.valorICMSEnt);
+    document.getElementById('p-icmsent-pr').textContent = fmt(cb.valorICMSEnt);
+    document.getElementById('p-st-cl').textContent = fmt(cb.valorST);
+    document.getElementById('p-st-pr').textContent = fmt(cb.valorST);
+    document.getElementById('p-ipi-cl').textContent = fmt(cb.valorIPI);
+    document.getElementById('p-ipi-pr').textContent = fmt(cb.valorIPI);
+    document.getElementById('p-piscred-cl').textContent = fmt(cb.creditoPisCofins);
+    document.getElementById('p-piscred-pr').textContent = fmt(cb.creditoPisCofins);
+
+    document.getElementById('p-icmssai-cl').textContent = fmt(r.classico.valorICMSSai);
+    document.getElementById('p-icmssai-pr').textContent = fmt(r.premium.valorICMSSai);
+    document.getElementById('p-pisdeb-cl').textContent = fmt(r.classico.debitoPisCofins);
+    document.getElementById('p-pisdeb-pr').textContent = fmt(r.premium.debitoPisCofins);
+    document.getElementById('p-difal-cl').textContent = fmt(r.classico.valorDifal);
+    document.getElementById('p-difal-pr').textContent = fmt(r.premium.valorDifal);
+    document.getElementById('p-taxa-cl').textContent = fmt(r.classico.taxaML);
+    document.getElementById('p-taxa-pr').textContent = fmt(r.premium.taxaML);
+}
+
+document.getElementById('toggle-st-form').addEventListener('change', () => {
+    stRessarcido = document.getElementById('toggle-st-form').checked;
+    localStorage.setItem('st_ressarcido', stRessarcido);
+    recalcular();
+});
+
+async function salvar() {
+    const nome = document.getElementById('nome').value.trim();
+    if (!nome) { alert('Informe o nome do produto.'); return; }
+
+    const dados = {
+        sku: document.getElementById('sku').value.trim(),
+        cod_barras: document.getElementById('cod_barras').value.trim(),
+        marca_id: document.getElementById('marca_id').value || null,
+        nome,
+        custo: document.getElementById('custo').value,
+        icms_entrada: document.getElementById('icms_entrada').value,
+        st: document.getElementById('st').value,
+        ipi: document.getElementById('ipi').value,
+        difal: document.getElementById('difal').value,
+        icms_saida: document.getElementById('icms_saida').value,
+        frete_ml: document.getElementById('frete_ml').value,
+        preco_classico: document.getElementById('preco_classico').value,
+        preco_premium: document.getElementById('preco_premium').value,
+        preco_concorrente_classico: document.getElementById('preco_concorrente_classico').value,
+        preco_concorrente_premium: document.getElementById('preco_concorrente_premium').value
+    };
+
+    if (idEdicao) {
+        await Api.put('/api/produtos/' + idEdicao, dados);
+    } else {
+        await Api.post('/api/produtos', dados);
+    }
+    window.location.href = '/produtos.html';
+}
+
+(async () => {
+    const usuario = await Api.get('/api/auth/eu');
+    if (!usuario) return;
+
+    document.getElementById('toggle-st-form').checked = stRessarcido;
+
+    const marcas = await Api.get('/api/marcas');
+    if (marcas) {
+        const sel = document.getElementById('marca_id');
+        marcas.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.nome;
+            sel.appendChild(opt);
+        });
+    }
+
+    if (idEdicao) {
+        document.getElementById('titulo-pagina').textContent = 'Editar Produto';
+        const p = await Api.get('/api/produtos/' + idEdicao);
+        if (!p) return;
+        ['sku','cod_barras','nome','custo','icms_entrada','st','ipi','difal','icms_saida',
+        'frete_ml','preco_classico','preco_premium',
+        'preco_concorrente_classico','preco_concorrente_premium'].forEach(campo => {
+            const el = document.getElementById(campo);
+            if (el) el.value = p[campo] ?? '';
+        });
+        document.getElementById('marca_id').value = p.marca_id || '';
+        recalcular();
+    }
+})();
+</script>
+</body>
+</html>

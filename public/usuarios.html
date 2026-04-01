@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { padding: 32px; }
+        .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 24px; }
+        .layout { display: grid; grid-template-columns: 320px 1fr; gap: 24px; }
+        .permissao-hint { font-size: 11px; margin-top: 6px; min-height: 16px; }
+        .hint-admin { color: var(--warning); }
+        .hint-visita { color: var(--text-muted); }
+        .btn-cadastrar { background: linear-gradient(135deg, var(--accent), #5b9cf6); color: #fff; width: 100%; padding: 12px; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+
+<button class="voltar" onclick="window.location.href='/produtos.html'">← Voltar</button>
+<h1>Gestão de Usuários</h1>
+<p style="color:var(--text-secondary);margin-bottom:24px">Controle quem acessa e modifica o sistema.</p>
+
+<div class="layout">
+    <div class="card">
+        <div class="secao-titulo" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:16px">Novo Acesso</div>
+
+        <div class="campo">
+            <label>Usuário</label>
+            <input type="text" id="novo-username" placeholder="Nome de usuário">
+        </div>
+        <div class="campo">
+            <label>Senha</label>
+            <input type="password" id="novo-senha" placeholder="••••••••">
+        </div>
+        <div class="campo">
+            <label>Nível de Permissão</label>
+            <select id="novo-permissao" onchange="atualizarHint()">
+                <option value="visita">Visita (Somente Leitura)</option>
+                <option value="admin">Administrador (Total)</option>
+            </select>
+            <div class="permissao-hint hint-visita" id="hint-permissao">Pode apenas visualizar e simular.</div>
+        </div>
+
+        <button class="btn-cadastrar" onclick="cadastrar()">Cadastrar Usuário</button>
+        <p class="erro-msg" id="erro"></p>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;align-self:start">
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Permissão</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="lista"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let usuarios = [];
+let euId = null;
+
+function atualizarHint() {
+    const val = document.getElementById('novo-permissao').value;
+    const hint = document.getElementById('hint-permissao');
+    if (val === 'admin') {
+        hint.textContent = 'Pode criar, editar e excluir tudo.';
+        hint.className = 'permissao-hint hint-admin';
+    } else {
+        hint.textContent = 'Pode apenas visualizar e simular.';
+        hint.className = 'permissao-hint hint-visita';
+    }
+}
+
+function renderizar() {
+    document.getElementById('lista').innerHTML = usuarios.map(u => `
+        <tr>
+            <td>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0">${u.username[0].toUpperCase()}</div>
+                    <strong>${u.username}</strong>
+                </div>
+            </td>
+            <td><span class="badge ${u.permissao === 'admin' ? 'badge-admin' : 'badge-visita'}">${u.permissao === 'admin' ? 'Administrador' : 'Visita'}</span></td>
+            <td>${u.id !== euId ? `<button class="btn-icon" onclick="excluir(${u.id})" style="color:var(--danger)">🗑</button>` : '—'}</td>
+        </tr>
+    `).join('');
+}
+
+async function cadastrar() {
+    const username = document.getElementById('novo-username').value.trim();
+    const senha = document.getElementById('novo-senha').value;
+    const permissao = document.getElementById('novo-permissao').value;
+    const erro = document.getElementById('erro');
+
+    if (!username || !senha) { erro.textContent = 'Preencha todos os campos.'; return; }
+
+    const res = await Api.post('/api/usuarios', { username, senha, permissao });
+    if (res.ok) {
+        usuarios.push({ id: res.id, username, permissao });
+        renderizar();
+        document.getElementById('novo-username').value = '';
+        document.getElementById('novo-senha').value = '';
+        erro.textContent = '';
+    } else {
+        erro.textContent = res.erro || 'Erro ao cadastrar.';
+    }
+}
+
+async function excluir(id) {
+    if (!confirm('Excluir este usuário?')) return;
+    await Api.delete('/api/usuarios/' + id);
+    usuarios = usuarios.filter(u => u.id !== id);
+    renderizar();
+}
+
+(async () => {
+    const eu = await Api.get('/api/auth/eu');
+    if (!eu) return;
+    if (eu.permissao !== 'admin') { window.location.href = '/produtos.html'; return; }
+    euId = eu.id;
+    usuarios = await Api.get('/api/usuarios') || [];
+    renderizar();
+})();
+</script>
+</body>
+</html>

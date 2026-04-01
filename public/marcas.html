@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marcas</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { padding: 32px; max-width: 600px; margin: 0 auto; }
+        .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 24px; }
+        .nova-marca { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 24px; }
+        .nova-marca input { flex: 1; }
+        .btn-add { background: var(--danger); color: #fff; white-space: nowrap; padding: 10px 20px; border-radius: var(--radius-sm); }
+    </style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+
+<button class="voltar" onclick="window.location.href='/produtos.html'">← Voltar</button>
+<h1>Gerenciar Marcas</h1>
+<br>
+
+<div class="card" style="margin-bottom:24px">
+    <div class="secao-titulo" style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:16px">Nova Marca</div>
+    <div class="nova-marca">
+        <input type="text" id="nova-marca" placeholder="Ex: Deca, Docol, Tramontina...">
+        <button class="btn-add" onclick="adicionar()">+</button>
+    </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+    <table>
+        <thead>
+            <tr>
+                <th>Nome da Marca</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+    </table>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+let marcas = [];
+
+function renderizar() {
+    document.getElementById('lista').innerHTML = marcas.map(m => `
+        <tr>
+            <td><strong>${m.nome}</strong></td>
+            <td><button class="btn-icon" onclick="excluir(${m.id})" style="color:var(--danger)">🗑</button></td>
+        </tr>
+    `).join('');
+}
+
+async function adicionar() {
+    const input = document.getElementById('nova-marca');
+    const nome = input.value.trim();
+    if (!nome) return;
+    const res = await Api.post('/api/marcas', { nome });
+    if (res.ok) {
+        marcas.push({ id: res.id, nome });
+        marcas.sort((a, b) => a.nome.localeCompare(b.nome));
+        renderizar();
+        input.value = '';
+    }
+}
+
+async function excluir(id) {
+    if (!confirm('Excluir esta marca?')) return;
+    await Api.delete('/api/marcas/' + id);
+    marcas = marcas.filter(m => m.id !== id);
+    renderizar();
+}
+
+document.getElementById('nova-marca').addEventListener('keydown', e => { if (e.key === 'Enter') adicionar(); });
+
+(async () => {
+    const usuario = await Api.get('/api/auth/eu');
+    if (!usuario) return;
+    marcas = await Api.get('/api/marcas') || [];
+    renderizar();
+})();
+</script>
+</body>
+</html>

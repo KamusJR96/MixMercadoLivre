@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Mix Mercado Livre</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; }
+        .login-box { width: 100%; max-width: 420px; }
+        .login-box h1 { font-size: 28px; text-align: center; margin-bottom: 6px; }
+        .login-box .subtitulo { text-align: center; color: var(--text-secondary); margin-bottom: 28px; }
+        .login-box .rodape { text-align: center; color: var(--text-muted); font-size: 12px; margin-top: 24px; line-height: 1.8; }
+        .rodape span { color: var(--accent); }
+        .campo-senha { position: relative; }
+        .campo-senha input { padding-right: 44px; }
+        .btn-olho { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: var(--text-muted); font-size: 16px; padding: 4px; }
+    </style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+<div class="card login-box">
+    <h1>Bem-vindo</h1>
+    <p class="subtitulo">Faça login para prosseguir.</p>
+
+    <div class="campo">
+        <label>Usuário</label>
+        <input type="text" id="usuario" placeholder="Seu usuário" autocomplete="username">
+    </div>
+
+    <div class="campo">
+        <label>Senha</label>
+        <div class="campo-senha">
+            <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password">
+            <button class="btn-olho" onclick="alternarSenha()" tabindex="-1">👁</button>
+        </div>
+    </div>
+
+    <p class="erro-msg" id="erro"></p>
+
+    <button class="btn-primary" onclick="login()" id="btn-login">Acessar Sistema</button>
+
+    <div class="rodape">
+        <span>Sistema de Mix Mercado Livre</span><br>
+        Feito por: Gabriel de Jesus
+    </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+    document.getElementById('senha').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
+
+    function getRedirect() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('redirect') || '/produtos.html';
+    }
+
+    async function login() {
+        const username = document.getElementById('usuario').value.trim();
+        const senha = document.getElementById('senha').value;
+        const btn = document.getElementById('btn-login');
+        const erro = document.getElementById('erro');
+
+        if (!username || !senha) { erro.textContent = 'Preencha todos os campos.'; return; }
+
+        btn.textContent = 'Entrando...';
+        btn.disabled = true;
+
+        const res = await Api.post('/api/auth/login', { username, senha });
+
+        if (res.ok) {
+            window.location.href = getRedirect();
+        } else {
+            erro.textContent = res.erro || 'Erro ao fazer login.';
+            btn.textContent = 'Acessar Sistema';
+            btn.disabled = false;
+        }
+    }
+
+    function alternarSenha() {
+        const input = document.getElementById('senha');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+</script>

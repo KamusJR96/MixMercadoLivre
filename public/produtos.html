@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inicio | Produtos</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body { padding: 32px; }
+        .barra { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; }
+        .barra input { max-width: 500px; }
+        .btn-novo { background: var(--accent); color: #fff; white-space: nowrap; }
+        .btn-apenas-prejuizo { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+        .btn-apenas-prejuizo.ativo { border-color: var(--danger); color: var(--danger); }
+        .sku-cell { font-size: 13px; font-weight: 700; }
+        .marca-cell { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+        .preco-cell { font-weight: 700; }
+        .margem-cell { font-size: 12px; margin-top: 2px; }
+        .acoes-cell { display: flex; gap: 8px; }
+        .toggle-st-wrap { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-secondary); }
+        .toggle-st-wrap.ressarcido { color: var(--accent-2); font-weight: 600; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+        .icones-nav { display: flex; gap: 8px; align-items: center; }
+        .vazio { text-align: center; padding: 60px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+<script src="/js/theme.js"></script>
+
+<div class="topo">
+    <div>
+        <h1>Meus Produtos</h1>
+        <p>Gerencie seu mix</p>
+    </div>
+    <div class="topo-acoes">
+        <div class="toggle-st-wrap" id="toggle-st-wrap">
+            <label class="toggle">
+                <input type="checkbox" id="toggle-st" onchange="alternarST()">
+                <span class="toggle-slider"></span>
+            </label>
+            <span id="label-st">ST Padrão</span>
+        </div>
+        <button class="btn-icon" onclick="window.location.href='/dashboard.html'" title="Dashboard">📊</button>
+        <button class="btn-icon" onclick="window.location.href='/marcas.html'" title="Marcas">🏷</button>
+        <button class="btn-icon" id="btn-usuarios" onclick="window.location.href='/usuarios.html'" title="Usuários">👤</button>
+        <button id="btn-tema" onclick="alternarTema()">☀</button>
+        <div class="avatar" id="avatar">G</div>
+        <button class="btn-icon" onclick="sair()">↪</button>
+    </div>
+</div>
+
+<div class="barra">
+    <input type="text" id="busca" placeholder="Pesquisar por SKU, Nome ou Marca..." oninput="filtrar()">
+    <button class="btn-apenas-prejuizo" id="btn-prejuizo" onclick="alternarPrejuizo()">⚠ Apenas Prejuízo</button>
+    <button class="btn-novo" onclick="window.location.href='/produtos-form.html'">+ Novo Produto</button>
+</div>
+
+<div class="card" style="padding:0; overflow:hidden;">
+    <table>
+        <thead>
+            <tr>
+                <th>SKU / MARCA</th>
+                <th>PRODUTO</th>
+                <th>CUSTO BASE</th>
+                <th style="color:var(--accent)">CLÁSSICO</th>
+                <th style="color:#b06cf7">PREMIUM</th>
+                <th>AÇÕES</th>
+            </tr>
+        </thead>
+        <tbody id="tabela-corpo"></tbody>
+    </table>
+    <div class="vazio" id="vazio" style="display:none">Nenhum produto encontrado.</div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/calculosFiscais.js"></script>
+<script>
+let todos = [];
+let somenteAdmin = false;
+let filtroPrejuizo = false;
+let stRessarcido = localStorage.getItem('st_ressarcido') === 'true';
+
+function fmt(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+
+function aplicarToggleST() {
+    document.getElementById('toggle-st').checked = stRessarcido;
+    const wrap = document.getElementById('toggle-st-wrap');
+    const label = document.getElementById('label-st');
+    if (stRessarcido) {
+        wrap.classList.add('ressarcido');
+        label.textContent = '⚡ ST Ressarcido';
+    } else {
+        wrap.classList.remove('ressarcido');
+        label.textContent = 'ST Padrão';
+    }
+}
+
+function alternarST() {
+    stRessarcido = document.getElementById('toggle-st').checked;
+    localStorage.setItem('st_ressarcido', stRessarcido);
+    aplicarToggleST();
+    renderizar();
+}
+
+function calcular(p) {
+    return calcularPrecificacao({
+        custo: p.custo, icms_entrada: p.icms_entrada, icms_saida: p.icms_saida,
+        ipi: p.ipi, difal: p.difal, st: p.st, frete_ml: p.frete_ml,
+        preco_classico: p.preco_classico, preco_premium: p.preco_premium,
+        flag_simulacao_st: stRessarcido
+    });
+}
+
+function renderizar() {
+    const busca = document.getElementById('busca').value.toLowerCase();
+    const corpo = document.getElementById('tabela-corpo');
+    const vazio = document.getElementById('vazio');
+
+    let lista = todos.filter(p => {
+        const texto = (p.sku + ' ' + p.nome + ' ' + (p.marca_nome || '')).toLowerCase();
+        if (busca && !texto.includes(busca)) return false;
+        if (filtroPrejuizo) {
+            const r = calcular(p);
+            if (r.classico.margem >= 0 && r.premium.margem >= 0) return false;
+        }
+        return true;
+    });
+
+    if (lista.length === 0) {
+        corpo.innerHTML = '';
+        vazio.style.display = 'block';
+        return;
+    }
+    vazio.style.display = 'none';
+
+    corpo.innerHTML = lista.map(p => {
+        const r = calcular(p);
+        const mcl = r.classico.margem;
+        const mpr = r.premium.margem;
+        const clCl = mcl >= 0 ? 'margem-positiva' : 'margem-negativa';
+        const clPr = mpr >= 0 ? 'margem-positiva' : 'margem-negativa';
+        const seta = m => m >= 0 ? '↑' : '↓';
+        const editar = somenteAdmin ? '' : '';
+        return `<tr>
+            <td>
+                <div class="sku-cell">${p.sku || '—'}</div>
+                <div class="marca-cell">${p.marca_nome || '—'}</div>
+            </td>
+            <td><strong>${p.nome}</strong></td>
+            <td>${fmt(p.custo)}</td>
+            <td>
+                <div class="preco-cell">${fmt(p.preco_classico)}</div>
+                <div class="margem-cell ${clCl}">${mcl.toFixed(1)}% ${seta(mcl)}</div>
+            </td>
+            <td>
+                <div class="preco-cell">${fmt(p.preco_premium)}</div>
+                <div class="margem-cell ${clPr}">${mpr.toFixed(1)}% ${seta(mpr)}</div>
+            </td>
+            <td class="acoes-cell">
+                <button class="btn-icon" onclick="editar(${p.id})" title="Editar">✏</button>
+                ${somenteAdmin ? '' : `<button class="btn-icon" onclick="excluir(${p.id})" title="Excluir" style="color:var(--danger)">🗑</button>`}
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function filtrar() { renderizar(); }
+
+function alternarPrejuizo() {
+    filtroPrejuizo = !filtroPrejuizo;
+    document.getElementById('btn-prejuizo').classList.toggle('ativo', filtroPrejuizo);
+    renderizar();
+}
+
+function editar(id) { window.location.href = '/produtos-form.html?id=' + id; }
+
+async function excluir(id) {
+    if (!confirm('Excluir este produto?')) return;
+    await Api.delete('/api/produtos/' + id);
+    todos = todos.filter(p => p.id !== id);
+    renderizar();
+}
+
+async function sair() {
+    await Api.post('/api/auth/logout', {});
+    window.location.href = '/login.html';
+}
+
+(async () => {
+    const usuario = await Api.get('/api/auth/eu');
+    if (!usuario) return;
+    document.getElementById('avatar').textContent = usuario.username[0].toUpperCase();
+    somenteAdmin = usuario.permissao !== 'admin';
+    if (somenteAdmin) document.getElementById('btn-usuarios').style.display = 'none';
+    aplicarToggleST();
+    todos = await Api.get('/api/produtos');
+    if (!todos) return;
+    renderizar();
+})();
+</script>
+</body>
+</html>
