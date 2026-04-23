@@ -10,7 +10,6 @@
         .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 24px; }
         .secao { margin-bottom: 24px; }
         .secao-titulo { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 16px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
         .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .input-icon { position: relative; }
@@ -21,8 +20,6 @@
         .cenario-titulo { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 16px; padding: 3px 10px; border-radius: 4px; display: inline-block; }
         .classico-titulo { background: rgba(91,156,246,0.15); color: #5b9cf6; }
         .premium-titulo { background: rgba(176,108,247,0.15); color: #b06cf7; }
-        .resultado-linha { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px; }
-        .resultado-linha span:first-child { color: var(--text-secondary); }
         .resultado-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-weight: 700; }
         .margem-grande { font-size: 22px; font-weight: 800; }
         .pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
@@ -35,6 +32,24 @@
         .btn-salvar { background: linear-gradient(135deg, var(--accent), #5b9cf6); color: #fff; flex: 1; padding: 14px; font-size: 15px; }
         .btn-cancelar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); padding: 14px 24px; }
         .cabecalho-secao { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.hidden { display: none; }
+        .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 680px; max-height: 80vh; display: flex; flex-direction: column; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+        .modal-header h3 { font-size: 15px; font-weight: 700; }
+        .btn-fechar { background: transparent; border: none; color: var(--text-muted); font-size: 20px; padding: 4px 8px; }
+        .modal-body { overflow-y: auto; padding: 16px; flex: 1; }
+        .ml-item { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
+        .ml-item:hover { border-color: var(--accent); }
+        .ml-item img { width: 60px; height: 60px; object-fit: contain; border-radius: 6px; background: #fff; flex-shrink: 0; }
+        .ml-item-info { flex: 1; min-width: 0; }
+        .ml-item-nome { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ml-item-preco { font-size: 15px; font-weight: 800; color: var(--accent-2); margin-top: 4px; }
+        .ml-item-link { font-size: 11px; color: var(--accent); margin-top: 2px; }
+        .ml-loading { text-align: center; padding: 40px; color: var(--text-muted); }
+        .ml-erro { text-align: center; padding: 40px; color: var(--danger); }
+        .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); }
+        .btn-abrir-ml { background: #fff159; color: #333; font-size: 12px; padding: 6px 14px; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -48,21 +63,21 @@
     <div class="secao-titulo">Dados Cadastrais</div>
     <div class="grid-cadastral">
         <div class="campo">
-        <label>SKU</label>
-        <input type="text" id="sku">
-    </div>
-    <div class="campo">
-        <label>Cód. Barras <button class="btn-ml" onclick="buscarML('cod_barras')" title="Buscar no ML">ML</button></label>
-        <input type="text" id="cod_barras">
-    </div>
-    <div class="campo">
-        <label>Marca</label>
-        <select id="marca_id"><option value="">Selecione...</option></select>
-    </div>
-    <div class="campo">
-        <label>Descrição / Nome <button class="btn-ml" onclick="buscarML('nome')" title="Buscar no ML">ML</button></label>
-        <input type="text" id="nome">
-    </div>
+            <label>SKU</label>
+            <input type="text" id="sku">
+        </div>
+        <div class="campo">
+            <label>Cód. Barras <button class="btn-ml" onclick="buscarML('cod_barras')" title="Buscar no ML">ML</button></label>
+            <input type="text" id="cod_barras">
+        </div>
+        <div class="campo">
+            <label>Marca</label>
+            <select id="marca_id"><option value="">Selecione...</option></select>
+        </div>
+        <div class="campo">
+            <label>Descrição / Nome <button class="btn-ml" onclick="buscarML('nome')" title="Buscar no ML">ML</button></label>
+            <input type="text" id="nome">
+        </div>
     </div>
 </div>
 
@@ -133,10 +148,10 @@
             <span class="margem-grande" id="margem-cl">0,00%</span>
         </div>
         <div class="pills">
-            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor" id="p-icmsent-cl" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-cl">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-cl">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor" id="p-piscred-cl" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-cl">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-cl">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-cl">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-cl">R$ 0,00</div></div>
@@ -165,10 +180,10 @@
             <span class="margem-grande" id="margem-pr">0,00%</span>
         </div>
         <div class="pills">
-            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor" id="p-icmsent-pr" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-pr">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-pr">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor" id="p-piscred-pr" style="color:var(--success)">R$ 0,00</div></div>
+            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-pr">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-pr">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-pr">R$ 0,00</div></div>
             <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-pr">R$ 0,00</div></div>
@@ -182,12 +197,29 @@
     <button class="btn-cancelar" onclick="window.location.href='/produtos.html'">Cancelar</button>
 </div>
 
+<div class="modal-overlay hidden" id="modal-ml">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-titulo">Resultados no Mercado Livre</h3>
+            <button class="btn-fechar" onclick="fecharModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <div class="ml-loading">Buscando...</div>
+        </div>
+        <div class="modal-footer">
+            <span id="modal-info"></span>
+            <button class="btn-abrir-ml" id="btn-abrir-ml" onclick="abrirNoML()">Ver no ML ↗</button>
+        </div>
+    </div>
+</div>
+
 <script src="/js/api.js"></script>
 <script src="/js/calculosFiscais.js"></script>
 <script>
 const params = new URLSearchParams(window.location.search);
 const idEdicao = params.get('id');
 let stRessarcido = localStorage.getItem('st_ressarcido') === 'true';
+let urlAtualML = '';
 
 function fmt(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
 
@@ -206,14 +238,6 @@ function getDados() {
     };
 }
 
-function buscarML(campoId) {
-    const termo = document.getElementById(campoId).value.trim();
-    if (!termo) { alert('Preencha o campo antes de buscar.'); return; }
-    const termFormatado = termo.replace(/\s+/g, '-');
-    const url = 'https://lista.mercadolivre.com.br/' + termFormatado + '_OrderId_PRICE_NoIndex_True';
-    window.open(url, '_blank');
-}
-
 function recalcular() {
     const r = calcularPrecificacao(getDados());
 
@@ -227,16 +251,14 @@ function recalcular() {
     elMcl.className = 'margem-grande ' + (r.classico.margem >= 0 ? 'margem-positiva' : 'margem-negativa');
     elMpr.className = 'margem-grande ' + (r.premium.margem >= 0 ? 'margem-positiva' : 'margem-negativa');
 
-    const cb = r.custoBase;
-    document.getElementById('p-icmsent-cl').textContent = fmt(cb.valorICMSEnt);
-    document.getElementById('p-icmsent-pr').textContent = fmt(cb.valorICMSEnt);
-    document.getElementById('p-st-cl').textContent = fmt(cb.valorST);
-    document.getElementById('p-st-pr').textContent = fmt(cb.valorST);
-    document.getElementById('p-ipi-cl').textContent = fmt(cb.valorIPI);
-    document.getElementById('p-ipi-pr').textContent = fmt(cb.valorIPI);
-    document.getElementById('p-piscred-cl').textContent = fmt(cb.creditoPisCofins);
-    document.getElementById('p-piscred-pr').textContent = fmt(cb.creditoPisCofins);
-
+    document.getElementById('p-icmsent-cl').textContent = fmt(r.classico.valorICMSEnt);
+    document.getElementById('p-icmsent-pr').textContent = fmt(r.premium.valorICMSEnt);
+    document.getElementById('p-st-cl').textContent = fmt(r.classico.valorST);
+    document.getElementById('p-st-pr').textContent = fmt(r.premium.valorST);
+    document.getElementById('p-ipi-cl').textContent = fmt(r.classico.valorIPI);
+    document.getElementById('p-ipi-pr').textContent = fmt(r.premium.valorIPI);
+    document.getElementById('p-piscred-cl').textContent = fmt(r.classico.creditoPisCofins);
+    document.getElementById('p-piscred-pr').textContent = fmt(r.premium.creditoPisCofins);
     document.getElementById('p-icmssai-cl').textContent = fmt(r.classico.valorICMSSai);
     document.getElementById('p-icmssai-pr').textContent = fmt(r.premium.valorICMSSai);
     document.getElementById('p-pisdeb-cl').textContent = fmt(r.classico.debitoPisCofins);
@@ -251,6 +273,74 @@ document.getElementById('toggle-st-form').addEventListener('change', () => {
     stRessarcido = document.getElementById('toggle-st-form').checked;
     localStorage.setItem('st_ressarcido', stRessarcido);
     recalcular();
+});
+
+function buscarML(campoId) {
+    const termo = document.getElementById(campoId).value.trim();
+    if (!termo) { alert('Preencha o campo antes de buscar.'); return; }
+
+    let termFinal = termo;
+    if (campoId === 'nome') {
+        const marcaSel = document.getElementById('marca_id');
+        const marcaNome = marcaSel.options[marcaSel.selectedIndex].text;
+        if (marcaSel.value && marcaNome !== 'Selecione...') {
+            termFinal = marcaNome + ' ' + termo;
+        }
+    }
+
+    const termFormatado = termFinal
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, '-');
+
+    urlAtualML = 'https://lista.mercadolivre.com.br/' + termFormatado + '_OrderId_PRICE_NoIndex_True';
+
+    document.getElementById('modal-titulo').textContent = 'Buscando: ' + termFinal;
+    document.getElementById('modal-body').innerHTML = '<div class="ml-loading">🔍 Buscando no Mercado Livre...</div>';
+    document.getElementById('modal-info').textContent = '';
+    document.getElementById('modal-ml').classList.remove('hidden');
+
+    buscarAPI(termFinal);
+}
+
+async function buscarAPI(termo) {
+    try {
+        const res = await fetch(`https://api.mercadolibre.com/sites/MLB/search?q=${encodeURIComponent(termo)}&sort=price_asc&limit=8`);
+        const data = await res.json();
+
+        if (!data.results || data.results.length === 0) {
+            document.getElementById('modal-body').innerHTML = '<div class="ml-erro">Nenhum resultado encontrado.</div>';
+            return;
+        }
+
+        document.getElementById('modal-info').textContent = data.paging.total.toLocaleString('pt-BR') + ' resultados encontrados';
+
+        document.getElementById('modal-body').innerHTML = data.results.map(item => `
+            <div class="ml-item" onclick="window.open('${item.permalink}', '_blank')">
+                <img src="${item.thumbnail.replace('http:', 'https:')}" alt="">
+                <div class="ml-item-info">
+                    <div class="ml-item-nome" title="${item.title}">${item.title}</div>
+                    <div class="ml-item-preco">R$ ${Number(item.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div class="ml-item-link">Clique para abrir no Mercado Livre</div>
+                </div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        document.getElementById('modal-body').innerHTML = '<div class="ml-erro">Erro ao buscar. Tente novamente.</div>';
+    }
+}
+
+function fecharModal() {
+    document.getElementById('modal-ml').classList.add('hidden');
+}
+
+function abrirNoML() {
+    window.open(urlAtualML, '_blank');
+}
+
+document.getElementById('modal-ml').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
 });
 
 async function salvar() {
@@ -305,8 +395,8 @@ async function salvar() {
         const p = await Api.get('/api/produtos/' + idEdicao);
         if (!p) return;
         ['sku','cod_barras','nome','custo','icms_entrada','st','ipi','difal','icms_saida',
-        'frete_ml','preco_classico','preco_premium',
-        'preco_concorrente_classico','preco_concorrente_premium'].forEach(campo => {
+         'frete_ml','preco_classico','preco_premium',
+         'preco_concorrente_classico','preco_concorrente_premium'].forEach(campo => {
             const el = document.getElementById(campo);
             if (el) el.value = p[campo] ?? '';
         });
