@@ -9,9 +9,47 @@
         body { padding: 32px; max-width: 1100px; margin: 0 auto; }
         .voltar { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); margin-bottom: 24px; }
         .relatorio-card { margin-bottom: 32px; }
-        .relatorio-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .relatorio-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; gap: 16px; flex-wrap: wrap; }
         .relatorio-titulo { font-size: 16px; font-weight: 700; }
         .relatorio-subtitulo { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+        .filtros {
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+        }
+
+        .filtro-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 220px;
+        }
+
+        .filtro-grupo label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .filtro-grupo select {
+            height: 38px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 0 10px;
+            font-size: 13px;
+            outline: none;
+        }
+
         .opcoes { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; padding: 16px; background: var(--bg-input); border-radius: var(--radius-sm); }
         .opcao-check { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
         .opcao-check input { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); }
@@ -61,14 +99,26 @@
         </div>
     </div>
 
+    <div class="filtros">
+        <div class="filtro-grupo">
+            <label for="filtro-marca">Filtrar por marca</label>
+            <select id="filtro-marca" onchange="renderizar()">
+                <option value="">Todas as marcas</option>
+            </select>
+        </div>
+    </div>
+
     <div class="opcoes">
         <span style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px">Colunas opcionais:</span>
         <label class="opcao-check"><input type="checkbox" id="col-custo" onchange="renderizar()"> Custo Aquisição</label>
         <label class="opcao-check"><input type="checkbox" id="col-classico" onchange="renderizar()" checked> Preço Clássico</label>
+        <label class="opcao-check"><input type="checkbox" id="col-concorrente-classico" onchange="renderizar()"> Concorrente Clássico</label>
         <label class="opcao-check"><input type="checkbox" id="col-premium" onchange="renderizar()" checked> Preço Premium</label>
+        <label class="opcao-check"><input type="checkbox" id="col-concorrente-premium" onchange="renderizar()"> Concorrente Premium</label>
         <label class="opcao-check"><input type="checkbox" id="col-margem-cl" onchange="renderizar()" checked> Margem Clássico</label>
         <label class="opcao-check"><input type="checkbox" id="col-margem-pr" onchange="renderizar()"> Margem Premium</label>
         <label class="opcao-check"><input type="checkbox" id="col-custo-total" onchange="renderizar()"> Custo Total</label>
+        <label class="opcao-check"><input type="checkbox" id="col-icms-entrada" onchange="renderizar()"> ICMS Ent. (%)</label>
     </div>
 
     <div class="contador" id="contador">0 produtos</div>
@@ -109,72 +159,147 @@ function alternarST() {
     renderizar();
 }
 
-function fmt(v) { return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
-function fmtPct(v) { return Number(v).toFixed(2).replace('.', ',') + '%'; }
+function fmt(v) {
+    return 'R$ ' + Number(v || 0).toFixed(2).replace('.', ',');
+}
+
+function fmtPct(v) {
+    return Number(v || 0).toFixed(2).replace('.', ',') + '%';
+}
 
 function calcular(p) {
     return calcularPrecificacao({
-        custo: p.custo, icms_entrada: p.icms_entrada, icms_saida: p.icms_saida,
-        ipi: p.ipi, difal: p.difal, st: p.st, frete_ml: p.frete_ml,
-        preco_classico: p.preco_classico, preco_premium: p.preco_premium,
+        custo: p.custo,
+        icms_entrada: p.icms_entrada,
+        icms_saida: p.icms_saida,
+        ipi: p.ipi,
+        difal: p.difal,
+        st: p.st,
+        frete_ml: p.frete_ml,
+        preco_classico: p.preco_classico,
+        preco_premium: p.preco_premium,
         flag_simulacao_st: stRessarcido
     });
 }
 
 function getColunas() {
     return [
-        { id: 'sku',          label: 'SKU',              sempre: true },
-        { id: 'marca',        label: 'Marca',            sempre: true },
-        { id: 'nome',         label: 'Produto',          sempre: true },
-        { id: 'custo',        label: 'Custo Aquisição',  check: 'col-custo' },
-        { id: 'classico',     label: 'Preço Clássico',   check: 'col-classico' },
-        { id: 'premium',      label: 'Preço Premium',    check: 'col-premium' },
-        { id: 'margem_cl',    label: 'Margem Clássico',  check: 'col-margem-cl' },
-        { id: 'margem_pr',    label: 'Margem Premium',   check: 'col-margem-pr' },
-        { id: 'custo_total',  label: 'Custo Total',      check: 'col-custo-total' },
+        { id: 'sku',                   label: 'SKU',                   sempre: true },
+        { id: 'marca',                 label: 'Marca',                 sempre: true },
+        { id: 'nome',                  label: 'Produto',               sempre: true },
+        { id: 'custo',                 label: 'Custo Aquisição',       check: 'col-custo' },
+        { id: 'icms_entrada',          label: 'ICMS Ent. (%)',         check: 'col-icms-entrada' },
+        { id: 'classico',              label: 'Preço Clássico',        check: 'col-classico' },
+        { id: 'concorrente_classico',  label: 'Concorrente Clássico',  check: 'col-concorrente-classico' },
+        { id: 'premium',               label: 'Preço Premium',         check: 'col-premium' },
+        { id: 'concorrente_premium',   label: 'Concorrente Premium',   check: 'col-concorrente-premium' },
+        { id: 'margem_cl',             label: 'Margem Clássico',       check: 'col-margem-cl' },
+        { id: 'margem_pr',             label: 'Margem Premium',        check: 'col-margem-pr' },
+        { id: 'custo_total',           label: 'Custo Total',           check: 'col-custo-total' },
     ].filter(c => c.sempre || document.getElementById(c.check).checked);
 }
 
-function getLinhas() {
+function getValorConcorrente(p, tipo) {
+    const possiveisCampos = tipo === 'classico'
+        ? [
+            p.preco_concorrente_classico,
+            p.concorrente_classico,
+            p.preco_classico_concorrente,
+            p.valor_concorrente_classico
+        ]
+        : [
+            p.preco_concorrente_premium,
+            p.concorrente_premium,
+            p.preco_premium_concorrente,
+            p.valor_concorrente_premium
+        ];
+
+    const valor = possiveisCampos.find(v => v !== undefined && v !== null && v !== '');
+    return valor || 0;
+}
+
+function getProdutosFiltrados() {
+    const marcaSelecionada = document.getElementById('filtro-marca')?.value || '';
+
     return [...produtos]
+        .filter(p => {
+            if (!marcaSelecionada) return true;
+            return (p.marca_nome || '') === marcaSelecionada;
+        })
         .sort((a, b) => {
             const ma = (a.marca_nome || '').toLowerCase();
             const mb = (b.marca_nome || '').toLowerCase();
             if (ma !== mb) return ma.localeCompare(mb);
-            return a.nome.toLowerCase().localeCompare(b.nome.toLowerCase());
-        })
-        .map(p => {
-            const r = calcular(p);
-            return {
-                sku: p.sku || '—',
-                marca: p.marca_nome || '—',
-                nome: p.nome,
-                custo: fmt(p.custo),
-                classico: fmt(p.preco_classico),
-                premium: fmt(p.preco_premium),
-                margem_cl: fmtPct(r.classico.margem),
-                margem_pr: fmtPct(r.premium.margem),
-                custo_total: fmt(r.classico.custoTotal),
-                _margem_cl_num: r.classico.margem,
-                _margem_pr_num: r.premium.margem,
-            };
+            return (a.nome || '').toLowerCase().localeCompare((b.nome || '').toLowerCase());
         });
+}
+
+function getLinhas() {
+    return getProdutosFiltrados().map(p => {
+        const r = calcular(p);
+
+        return {
+            sku: p.sku || '—',
+            marca: p.marca_nome || '—',
+            nome: p.nome || '—',
+            custo: fmt(p.custo),
+            icms_entrada: fmtPct(p.icms_entrada),
+            classico: fmt(p.preco_classico),
+            concorrente_classico: fmt(getValorConcorrente(p, 'classico')),
+            premium: fmt(p.preco_premium),
+            concorrente_premium: fmt(getValorConcorrente(p, 'premium')),
+            margem_cl: fmtPct(r.classico.margem),
+            margem_pr: fmtPct(r.premium.margem),
+            custo_total: fmt(r.classico.custoTotal),
+            _margem_cl_num: r.classico.margem,
+            _margem_pr_num: r.premium.margem,
+        };
+    });
+}
+
+function carregarFiltroMarcas() {
+    const select = document.getElementById('filtro-marca');
+
+    const marcaSelecionadaAtual = select.value;
+
+    const marcas = [...new Set(
+        produtos
+            .map(p => p.marca_nome)
+            .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML =
+        '<option value="">Todas as marcas</option>' +
+        marcas.map(marca => `<option value="${marca}">${marca}</option>`).join('');
+
+    if (marcaSelecionadaAtual && marcas.includes(marcaSelecionadaAtual)) {
+        select.value = marcaSelecionadaAtual;
+    }
 }
 
 function renderizar() {
     const colunas = getColunas();
     const linhas = getLinhas();
 
-    document.getElementById('contador').textContent = linhas.length + ' produto' + (linhas.length !== 1 ? 's' : '');
+    document.getElementById('contador').textContent =
+        linhas.length + ' produto' + (linhas.length !== 1 ? 's' : '');
 
-    document.getElementById('thead').innerHTML = `<tr>${colunas.map(c => `<th>${c.label}</th>`).join('')}</tr>`;
+    document.getElementById('thead').innerHTML =
+        `<tr>${colunas.map(c => `<th>${c.label}</th>`).join('')}</tr>`;
 
     document.getElementById('tbody').innerHTML = linhas.map(l => `
         <tr>${colunas.map(c => {
-            let val = l[c.id];
+            const val = l[c.id];
             let cor = '';
-            if (c.id === 'margem_cl') cor = l._margem_cl_num >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
-            if (c.id === 'margem_pr') cor = l._margem_pr_num >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
+
+            if (c.id === 'margem_cl') {
+                cor = l._margem_cl_num >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
+            }
+
+            if (c.id === 'margem_pr') {
+                cor = l._margem_pr_num >= 0 ? 'color:var(--success)' : 'color:var(--danger)';
+            }
+
             return `<td style="${cor}">${val}</td>`;
         }).join('')}</tr>
     `).join('');
@@ -187,8 +312,10 @@ function exportarXLS() {
         colunas.map(c => c.label),
         ...linhas.map(l => colunas.map(c => l[c.id]))
     ];
+
     const ws = XLSX.utils.aoa_to_sheet(dados);
     const wb = XLSX.utils.book_new();
+
     XLSX.utils.book_append_sheet(wb, ws, 'Mix');
     XLSX.writeFile(wb, 'contagem-mix.xlsx');
 }
@@ -198,12 +325,20 @@ function exportarPDF() {
     const doc = new jsPDF({ orientation: 'landscape' });
     const colunas = getColunas();
     const linhas = getLinhas();
+    const marcaSelecionada = document.getElementById('filtro-marca')?.value || 'Todas as marcas';
 
     doc.setFontSize(14);
     doc.text('Contagem de Mix', 14, 16);
+
     doc.setFontSize(9);
     doc.setTextColor(150);
-    doc.text('Ordenado por Marca › Nome  |  ' + (stRessarcido ? 'ST Ressarcido' : 'ST Padrão'), 14, 22);
+    doc.text(
+        'Ordenado por Marca › Nome  |  ' +
+        (stRessarcido ? 'ST Ressarcido' : 'ST Padrão') +
+        '  |  Marca: ' + marcaSelecionada,
+        14,
+        22
+    );
 
     doc.autoTable({
         startY: 26,
@@ -216,8 +351,14 @@ function exportarPDF() {
             if (data.section === 'body') {
                 const col = colunas[data.column.index];
                 const linha = linhas[data.row.index];
-                if (col.id === 'margem_cl') data.cell.styles.textColor = linha._margem_cl_num >= 0 ? [30,150,80] : [200,50,50];
-                if (col.id === 'margem_pr') data.cell.styles.textColor = linha._margem_pr_num >= 0 ? [30,150,80] : [200,50,50];
+
+                if (col.id === 'margem_cl') {
+                    data.cell.styles.textColor = linha._margem_cl_num >= 0 ? [30, 150, 80] : [200, 50, 50];
+                }
+
+                if (col.id === 'margem_pr') {
+                    data.cell.styles.textColor = linha._margem_pr_num >= 0 ? [30, 150, 80] : [200, 50, 50];
+                }
             }
         }
     });
@@ -228,8 +369,13 @@ function exportarPDF() {
 (async () => {
     const usuario = await Api.get('/api/auth/eu');
     if (!usuario) return;
+
     aplicarToggleST();
+
     produtos = await Api.get('/api/produtos') || [];
+
+    carregarFiltroMarcas();
+
     renderizar();
 })();
 </script>
