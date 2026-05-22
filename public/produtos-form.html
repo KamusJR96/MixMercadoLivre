@@ -23,10 +23,16 @@
         .resultado-total { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-weight: 700; }
         .margem-grande { font-size: 22px; font-weight: 800; }
         .pills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
-        .pill { background: var(--bg-input); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; }
+        .pill { background: var(--bg-input); border-radius: var(--radius-sm); padding: 8px 10px; text-align: center; border: 1px solid transparent; }
         .pill-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
-        .pill-valor { font-size: 13px; font-weight: 600; color: var(--danger); }
-        .pill-destaque { border: 1px solid var(--warning); }
+        .pill-valor { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .pill-credito { border-color: rgba(34, 197, 94, 0.35); background: rgba(34, 197, 94, 0.08); }
+        .pill-credito .pill-label,
+        .pill-valor-credito { color: #22c55e; }
+        .pill-debito { border-color: rgba(239, 68, 68, 0.30); background: rgba(239, 68, 68, 0.06); }
+        .pill-debito .pill-label,
+        .pill-valor-debito { color: var(--danger); }
+        .pill-destaque { border-color: var(--warning); }
         .pill-destaque .pill-valor { color: var(--warning); }
         .rodape-form { display: flex; gap: 12px; margin-top: 32px; }
         .btn-salvar { background: linear-gradient(135deg, var(--accent), #5b9cf6); color: #fff; flex: 1; padding: 14px; font-size: 15px; }
@@ -148,14 +154,14 @@
             <span class="margem-grande" id="margem-cl">0,00%</span>
         </div>
         <div class="pills">
-            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-cl">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-cl">R$ 0,00</div></div>
-            <div class="pill pill-destaque"><div class="pill-label">Taxa ML (11.5%)</div><div class="pill-valor" id="p-taxa-cl">R$ 0,00</div></div>
+            <div class="pill pill-credito"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">ST</div><div class="pill-valor pill-valor-debito" id="p-st-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">IPI</div><div class="pill-valor pill-valor-debito" id="p-ipi-cl">R$ 0,00</div></div>
+            <div class="pill pill-credito"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">ICMS Saída</div><div class="pill-valor pill-valor-debito" id="p-icmssai-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor pill-valor-debito" id="p-pisdeb-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">DIFAL</div><div class="pill-valor pill-valor-debito" id="p-difal-cl">R$ 0,00</div></div>
+            <div class="pill pill-debito pill-destaque"><div class="pill-label">Taxa ML (11.5%)</div><div class="pill-valor pill-valor-debito" id="p-taxa-cl">R$ 0,00</div></div>
         </div>
     </div>
 
@@ -180,14 +186,14 @@
             <span class="margem-grande" id="margem-pr">0,00%</span>
         </div>
         <div class="pills">
-            <div class="pill"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">ST</div><div class="pill-valor" id="p-st-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">IPI</div><div class="pill-valor" id="p-ipi-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">ICMS Saída</div><div class="pill-valor" id="p-icmssai-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor" id="p-pisdeb-pr">R$ 0,00</div></div>
-            <div class="pill"><div class="pill-label">DIFAL</div><div class="pill-valor" id="p-difal-pr">R$ 0,00</div></div>
-            <div class="pill pill-destaque"><div class="pill-label">Taxa ML (16.5%)</div><div class="pill-valor" id="p-taxa-pr">R$ 0,00</div></div>
+            <div class="pill pill-credito"><div class="pill-label">ICMS Ent (Créd)</div><div class="pill-valor pill-valor-credito" id="p-icmsent-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">ST</div><div class="pill-valor pill-valor-debito" id="p-st-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">IPI</div><div class="pill-valor pill-valor-debito" id="p-ipi-pr">R$ 0,00</div></div>
+            <div class="pill pill-credito"><div class="pill-label">PIS/COF (Créd)</div><div class="pill-valor pill-valor-credito" id="p-piscred-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">ICMS Saída</div><div class="pill-valor pill-valor-debito" id="p-icmssai-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor pill-valor-debito" id="p-pisdeb-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito"><div class="pill-label">DIFAL</div><div class="pill-valor pill-valor-debito" id="p-difal-pr">R$ 0,00</div></div>
+            <div class="pill pill-debito pill-destaque"><div class="pill-label">Taxa ML (16.5%)</div><div class="pill-valor pill-valor-debito" id="p-taxa-pr">R$ 0,00</div></div>
         </div>
     </div>
 </div>
