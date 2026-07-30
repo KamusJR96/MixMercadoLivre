@@ -4,7 +4,7 @@ const CONSTANTES_FISCAIS = {
     TAXA_PREMIUM: 16.5 / 100
 };
 
-// Função utilitária para mitigar imprecisão de ponto flutuante no JS
+// Função utilitária para mitigar imprecisão de ponto flutuante
 const arredondar = (valor) => Math.round(valor * 100) / 100;
 
 function calcularDifalBaseDupla(preco, aliquotaInter, aliquotaInternaDestino) {
@@ -12,41 +12,33 @@ function calcularDifalBaseDupla(preco, aliquotaInter, aliquotaInternaDestino) {
     
     const valorIcmsOrigem = preco * aliquotaInter;
     const baseSemIcms = preco - valorIcmsOrigem;
-    
-    // Forma a Base Dupla inserindo a alíquota de destino por dentro
     const baseDifalDestino = baseSemIcms / (1 - aliquotaInternaDestino);
-    
     const valorIcmsDestino = baseDifalDestino * aliquotaInternaDestino;
-    const valorDifal = valorIcmsDestino - valorIcmsOrigem;
     
-    return arredondar(valorDifal);
+    return arredondar(valorIcmsDestino - valorIcmsOrigem);
 }
 
 function calcularPrecificacao(dados) {
     const custo = Number(dados.custo) || 0;
-    
-    // CORREÇÃO: Voltando para os nomes originais que vêm do seu Front-end
     const icmsEntPct = (Number(dados.icms_entrada) || 0) / 100;
-    const icmsSaiInterPct = (Number(dados.icms_saida) || 0) / 100; // Recebe os 12% da tela
-    const difalTelaPct = (Number(dados.difal) || 0) / 100; // Recebe os 6% da tela
+    const icmsSaiInterPct = (Number(dados.icms_saida) || 0) / 100; 
+    const difalTelaPct = (Number(dados.difal) || 0) / 100; 
     
-    // MÁGICA: Deduzimos a alíquota interna somando a saída (12%) + difal tela (6%) = 18%
+    // Deduz a alíquota interna somando a saída + difal tela
     const icmsInternoDestinoPct = icmsSaiInterPct + difalTelaPct;
     
     const ipiPct = (Number(dados.ipi) || 0) / 100;
     const freteML = Number(dados.frete_ml) || 0;
     
-    // Regra CODIN: Se ativo, isenta ST.
+    // Regra CODIN: Isenção de ST
     const isencaoCodinAtiva = dados.flag_simulacao_st;
     const stPct = isencaoCodinAtiva ? 0.0 : ((Number(dados.st) || 0) / 100);
 
     const valorIPI = arredondar(custo * ipiPct);
     const valorST = arredondar(custo * stPct);
-    
-    // O crédito de ICMS de entrada é SEMPRE sobre o custo
     const valorICMSEnt = arredondar(custo * icmsEntPct);
 
-    // Lucro Real: Base de crédito PIS/COFINS (Custo - ICMS Entrada + IPI)
+    // Lucro Real: Base de crédito PIS/COFINS
     const basePisCofinsEnt = custo - valorICMSEnt + valorIPI;
     const creditoPisCofins = arredondar(basePisCofinsEnt * CONSTANTES_FISCAIS.PIS_COFINS);
 
@@ -58,28 +50,23 @@ function calcularPrecificacao(dados) {
         const taxaML = arredondar(preco * taxaPct);
         const valorICMSSai = arredondar(preco * icmsSaiInterPct);
         
-        // Lucro Real: Tese do Século (Preço - ICMS Saída)
+        // Benefício CODIN: 6% de Crédito Presumido na saída (reduz o custo final)
+        const creditoPresumidoCodin = isencaoCodinAtiva ? arredondar(preco * 0.06) : 0;
+        
+        // Lucro Real: Tese do Século
         const basePisCofinsSai = preco - valorICMSSai;
         const debitoPisCofins = arredondar(basePisCofinsSai * CONSTANTES_FISCAIS.PIS_COFINS);
         
-        // Cálculo do DIFAL em Base Dupla
+        // DIFAL Base Dupla
         const valorDifal = calcularDifalBaseDupla(preco, icmsSaiInterPct, icmsInternoDestinoPct);
 
-        const custoTotal = arredondar(valorLiquido + freteML + taxaML + debitoPisCofins + valorICMSSai + valorDifal);
+        // Custo Total abatendo o Crédito Presumido do CODIN
+        const custoTotal = arredondar(valorLiquido + freteML + taxaML + debitoPisCofins + valorICMSSai + valorDifal - creditoPresumidoCodin);
         const margem = preco > 0 ? arredondar(((preco - custoTotal) / preco) * 100) : 0;
 
         return { 
-            taxaML, 
-            valorICMSSai, 
-            debitoPisCofins, 
-            valorDifal, 
-            custoTotal, 
-            margem, 
-            valorICMSEnt, 
-            valorIPI, 
-            valorST, 
-            creditoPisCofins, 
-            valorLiquido 
+            taxaML, valorICMSSai, debitoPisCofins, valorDifal, creditoPresumidoCodin,
+            custoTotal, margem, valorICMSEnt, valorIPI, valorST, creditoPisCofins, valorLiquido 
         };
     };
 
@@ -87,14 +74,7 @@ function calcularPrecificacao(dados) {
     const premium = calcularCenario(dados.preco_premium, CONSTANTES_FISCAIS.TAXA_PREMIUM);
 
     return {
-        custoBase: {
-            valorICMSEnt,
-            valorIPI,
-            valorST,
-            creditoPisCofins,
-            valorLiquido
-        },
-        classico,
-        premium
+        custoBase: { valorICMSEnt, valorIPI, valorST, creditoPisCofins, valorLiquido },
+        classico, premium
     };
 }
