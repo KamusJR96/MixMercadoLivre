@@ -7,16 +7,16 @@ const CONSTANTES_FISCAIS = {
 // Função utilitária para mitigar imprecisão de ponto flutuante no JS
 const arredondar = (valor) => Math.round(valor * 100) / 100;
 
-function calcularDifalBaseDupla(preco, aliquotaInter, aliquotaInternaSP) {
+function calcularDifalBaseDupla(preco, aliquotaInter, aliquotaInternaDestino) {
     if (!preco || preco <= 0) return 0;
     
     const valorIcmsOrigem = preco * aliquotaInter;
     const baseSemIcms = preco - valorIcmsOrigem;
     
     // Forma a Base Dupla inserindo a alíquota de destino por dentro
-    const baseDifalDestino = baseSemIcms / (1 - aliquotaInternaSP);
+    const baseDifalDestino = baseSemIcms / (1 - aliquotaInternaDestino);
     
-    const valorIcmsDestino = baseDifalDestino * aliquotaInternaSP;
+    const valorIcmsDestino = baseDifalDestino * aliquotaInternaDestino;
     const valorDifal = valorIcmsDestino - valorIcmsOrigem;
     
     return arredondar(valorDifal);
@@ -24,9 +24,15 @@ function calcularDifalBaseDupla(preco, aliquotaInter, aliquotaInternaSP) {
 
 function calcularPrecificacao(dados) {
     const custo = Number(dados.custo) || 0;
+    
+    // CORREÇÃO: Voltando para os nomes originais que vêm do seu Front-end
     const icmsEntPct = (Number(dados.icms_entrada) || 0) / 100;
-    const icmsSaiInterPct = (Number(dados.icms_saida_interestadual) || 0) / 100; // Ex: 12%
-    const icmsInternoDestinoPct = (Number(dados.aliquota_interna_destino) || 0) / 100; // Ex: 18% para SP
+    const icmsSaiInterPct = (Number(dados.icms_saida) || 0) / 100; // Recebe os 12% da tela
+    const difalTelaPct = (Number(dados.difal) || 0) / 100; // Recebe os 6% da tela
+    
+    // MÁGICA: Deduzimos a alíquota interna somando a saída (12%) + difal tela (6%) = 18%
+    const icmsInternoDestinoPct = icmsSaiInterPct + difalTelaPct;
+    
     const ipiPct = (Number(dados.ipi) || 0) / 100;
     const freteML = Number(dados.frete_ml) || 0;
     
@@ -37,7 +43,7 @@ function calcularPrecificacao(dados) {
     const valorIPI = arredondar(custo * ipiPct);
     const valorST = arredondar(custo * stPct);
     
-    // O crédito de ICMS de entrada é SEMPRE sobre o custo, independentemente do CODIN
+    // O crédito de ICMS de entrada é SEMPRE sobre o custo
     const valorICMSEnt = arredondar(custo * icmsEntPct);
 
     // Lucro Real: Base de crédito PIS/COFINS (Custo - ICMS Entrada + IPI)
