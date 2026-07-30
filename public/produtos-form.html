@@ -91,7 +91,7 @@
     <div class="cabecalho-secao">
         <div class="secao-titulo" style="margin:0">Custo e Tributação (%)</div>
         <div class="toggle-container">
-            <span style="font-size:12px;color:var(--text-muted)">ST Ressarcido</span>
+            <span style="font-size:12px;color:var(--text-muted)">ST Ressarcido / CODIN</span>
             <label class="toggle">
                 <input type="checkbox" id="toggle-st-form">
                 <span class="toggle-slider"></span>
@@ -162,6 +162,8 @@
             <div class="pill pill-debito"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor pill-valor-debito" id="p-pisdeb-cl">R$ 0,00</div></div>
             <div class="pill pill-debito"><div class="pill-label">DIFAL</div><div class="pill-valor pill-valor-debito" id="p-difal-cl">R$ 0,00</div></div>
             <div class="pill pill-debito pill-destaque"><div class="pill-label">Taxa ML (11.5%)</div><div class="pill-valor pill-valor-debito" id="p-taxa-cl">R$ 0,00</div></div>
+            <!-- NOVO PILL: Crédito Presumido CODIN (Clássico) -->
+            <div class="pill pill-credito"><div class="pill-label">Cred. Presumido</div><div class="pill-valor pill-valor-credito" id="p-codin-cl">R$ 0,00</div></div>
         </div>
     </div>
 
@@ -194,6 +196,8 @@
             <div class="pill pill-debito"><div class="pill-label">PIS/COF (Deb)</div><div class="pill-valor pill-valor-debito" id="p-pisdeb-pr">R$ 0,00</div></div>
             <div class="pill pill-debito"><div class="pill-label">DIFAL</div><div class="pill-valor pill-valor-debito" id="p-difal-pr">R$ 0,00</div></div>
             <div class="pill pill-debito pill-destaque"><div class="pill-label">Taxa ML (16.5%)</div><div class="pill-valor pill-valor-debito" id="p-taxa-pr">R$ 0,00</div></div>
+            <!-- NOVO PILL: Crédito Presumido CODIN (Premium) -->
+            <div class="pill pill-credito"><div class="pill-label">Cred. Presumido</div><div class="pill-valor pill-valor-credito" id="p-codin-pr">R$ 0,00</div></div>
         </div>
     </div>
 </div>
@@ -273,6 +277,10 @@ function recalcular() {
     document.getElementById('p-difal-pr').textContent = fmt(r.premium.valorDifal);
     document.getElementById('p-taxa-cl').textContent = fmt(r.classico.taxaML);
     document.getElementById('p-taxa-pr').textContent = fmt(r.premium.taxaML);
+    
+    // Injeção de dados no novo PILL do Crédito Presumido CODIN
+    document.getElementById('p-codin-cl').textContent = fmt(r.classico.creditoPresumidoCodin);
+    document.getElementById('p-codin-pr').textContent = fmt(r.premium.creditoPresumidoCodin);
 }
 
 document.getElementById('toggle-st-form').addEventListener('change', () => {
